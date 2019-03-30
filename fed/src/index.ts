@@ -1,5 +1,134 @@
-(<any>window).pingbi = []
-let pingbi = (<any>window).pingbi
+const STORE_KEY = 'pingbi'
+let pingbi: Array<any>
+let toolBox: HTMLElement
+
+let JSONEX = {
+    stringify: function(obj: any){
+        let jsonified: any = {}
+        // loop through object and write string and type to newly stored data structure
+        for(let i in obj) {
+            jsonified[i] = {
+                // some voodoo to determine the variable type
+                type: Object.prototype.toString.call(obj[i]).split(/\W/)[2],
+                value: obj[i].toString()
+            }
+        }
+        return JSON.stringify(jsonified)
+    },
+
+    parse: function(json: string){
+        let objectified: any = {}
+        let obj:any = JSON.parse(json)
+        // loop through object, and handle parsing of string according to type
+        for(let i in obj) {
+            if(obj[i].type == "RegExp"){
+                var m = obj[i].value.match(/\/(.*)\/([a-z]+)?/)
+                objectified[i] = new RegExp(m[1],m[2]);
+            } else if(obj[i].type == "String"){
+                objectified[i] = obj[i].value
+            } else if(obj[i].type == "Function"){
+                // WARNING: this is more or less like using eval
+                // All the usual caveats apply - including jailtime
+                objectified[i] = new Function("return ("+obj[i].value+")")();
+            }
+            // ADD MORE TYPE HANDLERS HERE ...
+        }
+
+        return objectified
+
+    }
+}
+
+function saveCache() {
+    console.log('saveCache pingbi', pingbi)
+    let _c: any = {}
+    for (let key in pingbi) {
+        _c[key] = pingbi[key]
+    }
+    window.localStorage.setItem(STORE_KEY, JSONEX.stringify(_c))
+}
+
+function readCache(cache: any) {
+    let _c: any = JSONEX.parse(cache)
+    _c.length = Object.keys(_c).length
+    return Array.from(_c)
+}
+
+function render() {
+    renderItems()
+    saveCache()
+}
+
+;(<any>window).setPingBi = function(data: Array<any>) {
+    pingbi = data
+    render()
+}
+
+;(<any>window).concatPingBi = function(data: Array<any>) {
+    pingbi = pingbi.concat(data)
+    render()
+}
+
+
+function initToolBoxItem(data: any, index: number) {
+    let item: HTMLElement = document.createElement('div')
+    let contentItem: HTMLElement = document.createElement('span')
+    let closeItem: HTMLElement = document.createElement('span')
+    closeItem.textContent = 'x'
+    closeItem.onclick = function() {
+        pingbi.splice(index, 1)
+        if (item.parentNode) {
+            item.parentNode.removeChild(item)
+        }
+        saveCache()
+    }
+    closeItem.style.cssText = `
+    margin-left: 10px;
+    cursor: pointer;
+    `
+    contentItem.textContent = data
+    item.appendChild(contentItem)
+    item.appendChild(closeItem)
+    return item
+}
+
+function renderItems() {
+    let items: Array<HTMLElement>
+    items = pingbi.map((v, index) => {
+        return initToolBoxItem(v, index)
+    })
+    if (toolBox.children.length > 1) {
+        let content = toolBox.children[1]
+        content.innerHTML = ''
+        items.forEach(v => {
+            content.appendChild(v)
+        })
+    }
+}
+
+function initToolBox() {
+    let header = document.createElement('div')
+    header.textContent = '屏蔽规则'
+    let content = document.createElement('div')
+    toolBox = document.createElement('div')
+    toolBox.appendChild(header)
+    toolBox.appendChild(content)
+    toolBox.style.cssText = `
+position: fixed;
+right: 0;
+top: 50%;
+transform: translateY(-50%);
+padding: 30px 10px;
+`
+    document.body.appendChild(toolBox)
+    renderItems()
+}
+
+function init() {
+    let _cache: any = window.localStorage.getItem(STORE_KEY)
+    pingbi = _cache ? readCache(_cache) : []
+    initToolBox()
+}
 
 function doClean(dom: any) {
     let con = dom.querySelector('.RichContent')
@@ -91,4 +220,5 @@ function detect() {
     }, 300)
 }
 
+init()
 detect()
