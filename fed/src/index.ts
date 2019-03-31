@@ -59,12 +59,17 @@ function render() {
     saveCache()
 }
 
-;(<any>window).setPingBi = function(data: Array<any>) {
+interface MyWindow extends Window {
+    setPingBi(data: Array<any>): void,
+    concatPingBi(data: Array<any>): void
+}
+
+;(<MyWindow>window).setPingBi = function(data: Array<any>) {
     pingbi = data
     render()
 }
 
-;(<any>window).concatPingBi = function(data: Array<any>) {
+;(<MyWindow>window).concatPingBi = function(data: Array<any>) {
     pingbi = pingbi.concat(data)
     render()
 }
@@ -130,6 +135,23 @@ function init() {
     initToolBox()
 }
 
+function doFilter(dom: any, title: string) {
+    if (!dom.querySelector('.AuthorInfo-head .filter')) {
+        let n: HTMLElement = document.createElement('div')
+        n.classList.add('filter')
+        n.textContent = '添加到过滤'
+        n.style.cssText = `
+        cursor: pointer;
+        border: 1px solid #ddd;
+        padding: 10px;
+        `
+        n.onclick = function() {
+            (<MyWindow>window).concatPingBi([title])
+        }
+        dom.querySelector('.AuthorInfo-head').appendChild(n)
+    }
+}
+
 function doClean(dom: any) {
     let con = dom.querySelector('.RichContent')
     con.style.display = 'none'
@@ -152,10 +174,15 @@ function clear() {
                     return v.test(title.textContent.trim())
                 })
                 console.log(title.textContent, isNeedClean)
+            } else {
+                if (pingbi.indexOf('~') > -1) {
+                    isNeedClean = true
+                }
             }
             if (isNeedClean) {
                 doClean(dom)
             }
+            doFilter(dom, title)
             return true
         })
     }
