@@ -135,7 +135,7 @@ function init() {
     initToolBox()
 }
 
-function doFilter(dom: any, title: string) {
+function doFilter(dom: any, title: HTMLElement) {
     if (!dom.querySelector('.AuthorInfo-head .filter')) {
         let n: HTMLElement = document.createElement('div')
         n.classList.add('filter')
@@ -144,9 +144,11 @@ function doFilter(dom: any, title: string) {
         cursor: pointer;
         border: 1px solid #ddd;
         padding: 10px;
+        margin-left: 10px;
+        border-radius: 3px;
         `
         n.onclick = function() {
-            (<MyWindow>window).concatPingBi([title])
+            (<MyWindow>window).concatPingBi([title.textContent])
         }
         dom.querySelector('.AuthorInfo-head').appendChild(n)
     }
@@ -170,8 +172,11 @@ function clear() {
             let isNeedClean = false
             let title = dom.querySelector('.AuthorInfo-head .UserLink-link')
             if (title) {
-                isNeedClean = pingbi.some((v: RegExp) => {
-                    return v.test(title.textContent.trim())
+                isNeedClean = pingbi.some((v: any) => {
+                    if (v.test) {
+                        return v.test(title.textContent.trim())
+                    }
+                    return v === title.textContent
                 })
                 console.log(title.textContent, isNeedClean)
             } else {
@@ -181,8 +186,11 @@ function clear() {
             }
             if (isNeedClean) {
                 doClean(dom)
+            } else {
+                if (title) {
+                    doFilter(dom, title)
+                }
             }
-            doFilter(dom, title)
             return true
         })
     }
@@ -197,6 +205,9 @@ function createToggle(dom: any) {
     btn.innerHTML = 'toggle'
     btn.classList.add('Button')
     btn._showed = false
+    btn.style.cssText = `
+    margin-left: 10px;
+    `
     btn.addEventListener('click', function() {
         console.log('click')
         if (!btn._showed) {
