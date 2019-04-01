@@ -60,8 +60,9 @@ function render() {
 }
 
 interface MyWindow extends Window {
-    setPingBi(data: Array<any>): void,
-    concatPingBi(data: Array<any>): void
+    setPingBi(data: Array<any>): void;
+    concatPingBi(data: Array<any>): void;
+    Gator: Function
 }
 
 ;(<MyWindow>window).setPingBi = function(data: Array<any>) {
@@ -239,10 +240,9 @@ function detect() {
                     //console.log(mutation)
                     if (mutation.type == 'childList') {
                         if (
-                            mutation.previousSibling &&
-                            mutation.previousSibling.className == 'List-item'
+                            (mutation.addedNodes && mutation.addedNodes.length > 0) ||
+                            (mutation.removedNodes && mutation.removedNodes.length > 0)
                         ) {
-                            console.log('clear niming')
                             clear()
                         }
                     }
@@ -260,3 +260,10 @@ function detect() {
 
 init()
 detect()
+
+;(<MyWindow>window).Gator(document).on('click', 'button[role=combobox]', () => { 
+    console.log('click')
+    setTimeout(() => {
+        clear()
+    }, 0)
+})
