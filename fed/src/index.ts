@@ -261,9 +261,9 @@ function detect() {
 init()
 detect()
 
-;(<MyWindow>window).Gator(document).on('click', 'button[role=combobox]', () => { 
+;(<MyWindow>window).Gator(document).on('click', 'button[role=option]', () => { 
     console.log('click')
     setTimeout(() => {
         clear()
-    }, 0)
+    }, 1000)
 })
